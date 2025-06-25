@@ -112,14 +112,14 @@ void loop() {
 
     bme.takeForcedMeasurement();
     
-    printValues();
+    displayAndSendBmeValues();
 
     // The sensor should be read every 60 seconds when in Forced mode, according to the datasheet and Adafruit library
     delay(60000);
 }
 
 
-void printValues() {
+void displayAndSendBmeValues() {
 
     String temp = String(bme.readTemperature());
     String pressure = String(bme.readPressure() / 100);
@@ -146,6 +146,8 @@ void printValues() {
     payload += humidity;
     payload += ",\"altitude\":";
     payload += altitude;
+    payload += ",\"sensor\":";
+    payload += "bme280";
     payload += ",\"device\":";
     payload += "\"";
     payload += ssid;
