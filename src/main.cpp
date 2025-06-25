@@ -37,26 +37,43 @@
 // The pins for I2C are defined by the Wire-library. 
 // Checkout https://randomnerdtutorials.com/esp32-ssd1306-oled-display-arduino-ide/
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C // See https://randomnerdtutorials.com/esp32-ssd1306-oled-display-arduino-ide/
+#define OLED_ADDRESS 0x3C // See https://randomnerdtutorials.com/esp32-ssd1306-oled-display-arduino-ide/
 
-// Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+#define SEALEVELPRESSURE_HPA (1013.25)
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_BME280 bme;
 
 byte msgCount = 0;            // count of outgoing messages
 int interval = 2000;          // interval between sends
 long lastSendTime = 0;        // time of last packet send
+char ssid[23];
 
 void setup() {
   Serial.begin(115200);
+
+   // Get deviceId
+  snprintf(ssid, 23, "MCUDEVICE-%llX", ESP.getEfuseMac());
   
-  // Wire.begin(OLED_SDA, OLED_SCL);
+  Wire.begin(OLED_SDA, OLED_SCL);
   Serial.println("Looking for sensor");
-  if (! bme.begin(BME280_ADDRESS_ALTERNATE, &Wire)) {
+  if (! bme.begin(BME280_ADDRESS_ALTERNATE)) {
     Serial.println("Could not find a valid BME280 sensor, check wiring!");
     while (1);
   }
 
   Serial.println("Sensor found");
+
+  //initialize OLED
+  if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS, false, false)) { // Address 0x3C for 128x32
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
+  
+  display.clearDisplay();
+  display.setTextColor(WHITE);
+  display.setTextSize(1);
+
 
   LoRa.setPins(LORA_CS, LORA_RESET, LORA_DIO0);
   if (!LoRa.begin(LORA_FREQ)) {
@@ -64,7 +81,10 @@ void setup() {
     while (1);
   }
 
-  Serial.println("LoRa Initializing OK!");
+  display.setCursor(0,0);
+  display.print("LORA OK!");
+  display.display();
+
   LoRa.setPreambleLength(8);
   LoRa.setSpreadingFactor(7);
   LoRa.setSignalBandwidth(125E3);
@@ -75,6 +95,8 @@ void setup() {
   Serial.println("-- Weather Station Scenario --");
   Serial.println("forced mode, 1x temperature / 1x humidity / 1x pressure oversampling,");
   Serial.println("filter off");
+
+  // suggested rate is 1/60Hz (1m)
   bme.setSampling(Adafruit_BME280::MODE_FORCED,
                   Adafruit_BME280::SAMPLING_X1, // temperature
                   Adafruit_BME280::SAMPLING_X1, // pressure
@@ -84,19 +106,53 @@ void setup() {
 }
 
 void sendMessage(String outgoing);
-void onReceive(int packetSize);
+void printValues();
 
 void loop() {
-  if (millis() - lastSendTime > interval) {
-    String message = "{\"temp\":20.9,\"humidity\":43}";   // send a message
-    message += msgCount;
-    sendMessage(message);
-    Serial.println("Sending " + message);
-    lastSendTime = millis();            // timestamp the message
-    interval = random(2000) + 1000;    // 2-3 seconds
-    msgCount++;
-  }
 
+    bme.takeForcedMeasurement();
+    
+    printValues();
+
+    // The sensor should be read every 60 seconds when in Forced mode, according to the datasheet and Adafruit library
+    delay(60000);
+}
+
+
+void printValues() {
+
+    String temp = String(bme.readTemperature());
+    String pressure = String(bme.readPressure() / 100);
+    String humidity = String(bme.readHumidity());
+    String altitude = String(bme.readAltitude(SEALEVELPRESSURE_HPA));
+
+    display.clearDisplay();
+    display.setCursor(10,10);
+    display.print("Temp:  " + temp + " C");
+    display.setCursor(10,25);
+    display.print("Press: " + pressure + " hPa");
+    display.setCursor(10,40);
+    display.print("Hum:   " + humidity + " %");
+    display.setCursor(10,55);
+    display.print("Alt:   " + altitude + " m");
+    display.display();
+
+    String payload = "";
+    payload += "{\"temperature\":";
+    payload += temp;
+    payload += ",\"pressure\":";
+    payload += pressure;
+    payload += ",\"humidity\":";
+    payload += humidity;
+    payload += ",\"altitude\":";
+    payload += altitude;
+    payload += ",\"device\":";
+    payload += "\"";
+    payload += ssid;
+    payload += "\"";
+    payload += "}";
+
+    sendMessage(payload);
 }
 
 void sendMessage(String outgoing) {
