@@ -153,7 +153,7 @@ void displayAndSendBmeValues() {
     payload += ",\"altitude\":";
     payload += altitude;
     payload += ",\"sensor\":";
-    payload += "bme280";
+    payload += "\"bme280\"";
     payload += ",\"device\":";
     payload += "\"";
     payload += ssid;
