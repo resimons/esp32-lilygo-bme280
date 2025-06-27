@@ -44,9 +44,6 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 Adafruit_BME280 bme;
 
-byte msgCount = 0;            // count of outgoing messages
-int interval = 2000;          // interval between sends
-long lastSendTime = 0;        // time of last packet send
 char ssid[23];
 
 void setup() {
@@ -54,15 +51,8 @@ void setup() {
 
    // Get deviceId
   snprintf(ssid, 23, "MCUDEVICE-%llX", ESP.getEfuseMac());
-  
-  Wire.begin(OLED_SDA, OLED_SCL);
-  Serial.println("Looking for sensor");
-  if (! bme.begin(BME280_ADDRESS_ALTERNATE)) {
-    Serial.println("Could not find a valid BME280 sensor, check wiring!");
-    while (1);
-  }
 
-  Serial.println("Sensor found");
+  Wire.begin(OLED_SDA, OLED_SCL);
 
   //initialize OLED
   if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS, false, false)) { // Address 0x3C for 128x32
@@ -74,6 +64,16 @@ void setup() {
   display.setTextColor(WHITE);
   display.setTextSize(1);
 
+  Serial.println("Looking for sensor");
+  if (! bme.begin(BME280_ADDRESS_ALTERNATE)) {
+    Serial.println("Could not find a valid BME280 sensor, check wiring!");
+    while (1);
+  }
+
+  Serial.println("Sensor found");
+
+  display.setCursor(10,10);
+  display.print("BME280 found");
 
   LoRa.setPins(LORA_CS, LORA_RESET, LORA_DIO0);
   if (!LoRa.begin(LORA_FREQ)) {
@@ -81,9 +81,15 @@ void setup() {
     while (1);
   }
 
-  display.setCursor(0,0);
-  display.print("LORA OK!");
+  display.setCursor(10,25);
+  display.print("LORA OK");
   display.display();
+
+  display.setCursor(10,40);
+  display.print("Sampling started");
+  display.display();
+
+  delay(2500);
 
   LoRa.setPreambleLength(8);
   LoRa.setSpreadingFactor(7);
@@ -106,7 +112,7 @@ void setup() {
 }
 
 void sendMessage(String outgoing);
-void printValues();
+void displayAndSendBmeValues();
 
 void loop() {
 
@@ -161,6 +167,5 @@ void sendMessage(String outgoing) {
   LoRa.beginPacket();                   // start packet
   LoRa.print(outgoing);                 // add payload
   LoRa.endPacket();                     // finish packet and send it
-  msgCount++;                           // increment message ID
 }
 
