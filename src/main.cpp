@@ -29,7 +29,6 @@
 #define OLED_SDA 21
 #define OLED_SCL 22 
 
-
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
@@ -70,9 +69,7 @@ void setup() {
     while (1);
   }
 
-  Serial.println("Sensor found");
-
-  display.setCursor(10,10);
+  display.setCursor(5,10);
   display.print("BME280 found");
 
   LoRa.setPins(LORA_CS, LORA_RESET, LORA_DIO0);
@@ -81,12 +78,13 @@ void setup() {
     while (1);
   }
 
-  display.setCursor(10,25);
+  display.setCursor(5,25);
   display.print("LORA OK");
-  display.display();
-
-  display.setCursor(10,40);
+  display.setCursor(5,40);
   display.print("Sampling started");
+  display.setCursor(5,55);
+  display.print(String(ssid).substring(10));
+  
   display.display();
 
   delay(2500);
