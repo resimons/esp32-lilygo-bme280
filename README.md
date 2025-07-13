@@ -19,7 +19,7 @@ BME280 | WIRE | ESP
 ------------ | -------- | -------------
 VCC | RED | 3.3V
 GND | BLACK | GND
-SCL | BLUE | GPIO22
-SDA | GREEN | GPIO21
+SCL | GREEN | GPIO22
+SDA | BLUE | GPIO21
 
 ![image](https://github.com/resimons/esp32-lilygo-bme280/blob/main/images/IMG_7154.jpg)
