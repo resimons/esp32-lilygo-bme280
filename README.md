@@ -15,11 +15,11 @@ The data is received by another TTGO LoRa32 using [OpenMQTTGateway](https://docs
 [BME280](https://www.tinytronics.nl/nl/sensoren/lucht/druk/bme280-digitale-barometer-druk-en-vochtigheid-sensor-module)
 
 ## How to connect BME280 to ESP32
-BME280 | ESP
------------- | -------------
-VCC | 3.3V
-GND | GND
-SCL | GPIO22
-SDA | GPIO21
+BME280 | WIRE | ESP
+------------ | -------- | -------------
+VCC | RED | 3.3V
+GND | BLACK | GND
+SCL | BLUE | GPIO22
+SDA | GREEN | GPIO21
 
 ![image](https://github.com/resimons/esp32-lilygo-bme280/blob/main/images/IMG_7154.jpg)
